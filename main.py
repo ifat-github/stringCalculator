@@ -1,35 +1,37 @@
 import re
 
 
-def get_delimiter(str):
-    delimiter = '[,\n]'
+def escape_special_chars(delimiter):
     special_chars = '.\+*?[^]$(){}=!|:-'
-    m = re.search(r'\/\/(.)', str, re.IGNORECASE | re.MULTILINE)
-    if m:
-        delimiter = m.group(1)
-        if delimiter in special_chars:
-            delimiter = '\\' + delimiter
+    if delimiter in special_chars:
+        delimiter = '\\' + delimiter
     return delimiter
 
 
-def parse_numbers(input):
+def get_numbers(delimiter, numbers):
+    result = [int(x) for x in re.split(delimiter, numbers)]
+    negative_numbers = [x for x in result if x < 0]
+    if negative_numbers:
+        raise ValueError("negatives not allowed: %s" % negative_numbers)
+
+    result = [x for x in result if x < 1001]
+    return result
+
+
+def parse_input(input):
     numbers = input
-    m = re.search(r'\/\/.\n(.*)$', input, re.IGNORECASE | re.MULTILINE)
+    delimiter = '[,\n]'
+    m = re.search(r'\/\/\[?(.*?)\]?\n(.*?)$', input, re.IGNORECASE | re.MULTILINE)
     if m:
-        numbers = m.group(1)
-    return numbers
+        delimiter = ''.join([escape_special_chars(c) for c in m.group(1)])
+        numbers = m.group(2)
+
+    return delimiter, numbers
 
 
 def add(input):
     result = 0
-    numbers = parse_numbers(input)
-    delimiter = get_delimiter(input)
-
+    delimiter, numbers = parse_input(input)
     if numbers:
-        result = sum([int(x) for x in re.split(delimiter, numbers)])
+        result = sum(get_numbers(delimiter, numbers))
     return result
-
-
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    add('1,2')
